@@ -2,13 +2,12 @@ import React, { ReactElement } from 'react'
 import parse from 'autosuggest-highlight/parse'
 import debounce from 'lodash/debounce'
 
+import Box from '@material-ui/core/Box'
 import TextField from '@material-ui/core/TextField'
-import Autocomplete from '@material-ui/lab/Autocomplete'
+import Autocomplete from '@material-ui/core/Autocomplete'
 import LocationOnIcon from '@material-ui/icons/LocationOn'
 import Grid from '@material-ui/core/Grid'
 import Typography from '@material-ui/core/Typography'
-
-import { makeStyles } from '@material-ui/core/styles'
 
 import geocodeByPlaceId from '../../utils/geocodeByPlaceId'
 
@@ -26,22 +25,13 @@ function loadScript(src: string, position: HTMLHeadElement | null, id: string) {
   position.appendChild(script)
 }
 
-const useStyles = makeStyles((theme) => ({
-  icon: {
-    color: theme.palette.text.secondary,
-    marginRight: theme.spacing(2),
-  },
-}))
-
 interface IGooglePlacesInput {
   setSelectedPlace: (place: google.maps.GeocoderResult | null) => void
 }
 
-export default function GooglePlacesInput(
-  props: IGooglePlacesInput
-): ReactElement {
-  const classes = useStyles()
-
+export default function GooglePlacesInput({
+  setSelectedPlace,
+}: IGooglePlacesInput): ReactElement {
   const [value, setValue] =
     React.useState<google.maps.places.AutocompletePrediction | null>(null)
   const [inputValue, setInputValue] = React.useState('')
@@ -83,7 +73,7 @@ export default function GooglePlacesInput(
     if (selectedPlace && selectedPlace.place_id) {
       const [placeDetails] = await geocodeByPlaceId(selectedPlace.place_id)
 
-      props.setSelectedPlace(placeDetails || null)
+      setSelectedPlace(placeDetails || null)
     }
   }
 
@@ -146,11 +136,10 @@ export default function GooglePlacesInput(
         <TextField
           {...params}
           label='Digite para procurar um endereço'
-          variant='outlined'
           fullWidth
         />
       )}
-      renderOption={(option) => {
+      renderOption={(props, option) => {
         const matches =
           option.structured_formatting.main_text_matched_substrings
         const parts = parse(
@@ -159,25 +148,32 @@ export default function GooglePlacesInput(
         )
 
         return (
-          <Grid container alignItems='center'>
-            <Grid item>
-              <LocationOnIcon className={classes.icon} />
-            </Grid>
-            <Grid item xs>
-              {parts.map((part, index) => (
-                <span
-                  key={index}
-                  style={{ fontWeight: part.highlight ? 700 : 400 }}
-                >
-                  {part.text}
-                </span>
-              ))}
+          <li {...props}>
+            <Grid container alignItems='center'>
+              <Grid item>
+                <Box
+                  component={LocationOnIcon}
+                  sx={{ color: 'text.secondary', mr: 2 }}
+                />
+              </Grid>
+              <Grid item xs>
+                {parts.map((part, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      fontWeight: part.highlight ? 700 : 400,
+                    }}
+                  >
+                    {part.text}
+                  </span>
+                ))}
 
-              <Typography variant='body2' color='textSecondary'>
-                {option.structured_formatting.secondary_text}
-              </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  {option.structured_formatting.secondary_text}
+                </Typography>
+              </Grid>
             </Grid>
-          </Grid>
+          </li>
         )
       }}
     />
